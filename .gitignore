@@ -1,0 +1,5 @@
+.env
+key.txt
+users.json
+__pycache__/
+*.pyc
