@@ -180,21 +180,43 @@ async def send_scheduled_gif(context, chat_id):
 
         async with httpx.AsyncClient(timeout=15) as client:
             response = await client.get(url, params=params)
-            data = response.json()
 
-        if data.get("data"):
-            gif = random.choice(data["data"])
-            gif_url = gif["images"]["original"]["url"]
+        print(f"🎬 Giphy API status: {response.status_code}")
 
-            await context.bot.send_animation(
+        data = response.json()
+
+        if not data.get("data"):
+            print(f"❌ Giphy returned no results. Response: {data}")
+            await context.bot.send_message(
                 chat_id=chat_id,
-                animation=gif_url
+                text="🥺 couldn't find a gif right now, but sending love anyway 💖"
             )
+            return
 
-            print(f"🎬 sent gif to {chat_id}")
+        gif = random.choice(data["data"])
+
+        gif_url = gif["images"]["downsized"]["url"]
+
+        await context.bot.send_animation(
+            chat_id=chat_id,
+            animation=gif_url
+        )
+
+        print(f"🎬 sent gif to {chat_id}: {gif_url}")
+
+    except httpx.TimeoutException:
+        print(f"❌ gif timeout for {chat_id}")
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="🐢 gif took too long to load, try again in a sec! 💖"
+        )
 
     except Exception as e:
-        print(f"❌ gif error: {e}")
+        print(f"❌ gif error for {chat_id}: {type(e).__name__}: {e}")
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="💔 gif didn't work this time, but i still love u! 💖"
+        )
 
 # =========================
 # SCHEDULE MESSAGES
